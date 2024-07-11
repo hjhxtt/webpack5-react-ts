@@ -5,13 +5,13 @@ const baseConfig = require('./webpack.base.js')
 const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-const TerserPlugin = require('terser-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin'); // webpack5内置
 const PurgeCSSPlugin = require('purgecss-webpack-plugin')
 const CompressionPlugin  = require('compression-webpack-plugin')
 const globAll = require('glob-all')
 
 module.exports = merge(baseConfig, {
-  mode: 'production',
+  mode: 'production',  //production默认开启tree-shaking 清理js功能，打包时移除掉未引入代码
   plugins: [
     // 复制文件插件
     new CopyPlugin({
@@ -25,11 +25,11 @@ module.exports = merge(baseConfig, {
         },
       ],
     }),
-    // 抽离css插件
+    // 抽离css插件 搭配 base中的 MiniCssExtractPlugin.loader
     new MiniCssExtractPlugin({
       filename: 'static/css/[name].[contenthash:8].css'
     }),
-    // 去除没用到的css插件
+    // 去除没用到的css插件 清理无用css功能
     new PurgeCSSPlugin({
       paths: globAll.sync([
         `${path.join(__dirname, '../src')}/**/*.tsx`,
@@ -58,11 +58,14 @@ module.exports = merge(baseConfig, {
         parallel: true, // 开启多线程压缩
         terserOptions: {
           compress: {
-            pure_funcs: ["console.log"]
+            pure_funcs: ["console.log"] // 删除console.log
           }
         }
       }),
     ],
+    // 优化第三方包
+    // 打包后node_modules里面的模块被抽离到verdors.ec725ef1.js中,
+    // 业务代码在main.9a6bf38a.js中
     splitChunks: { // 分隔代码
       cacheGroups: {
         vendors: { // 提取node_modules代码
@@ -81,5 +84,6 @@ module.exports = merge(baseConfig, {
         // }
       }
     }
+
   },
 })
