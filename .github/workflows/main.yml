@@ -1,5 +1,4 @@
-# .github/workflows/deploy.yml
-name: Deploy
+name: Build and Deploy
 
 on:
   push:
@@ -9,42 +8,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.ref }}
-      cancel-in-progress: true
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+    - uses: actions/checkout@v2
 
     - name: Install dependencies
-      run: npm install
+      run: | 
+        npm install -g pnpm
+        pnpm install
 
-    - name: Run tests
-      run: npm test
-
-    - name: Code review approval
-      uses: actions-ecosystem/action-approved@v2
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build project
+    - name: Build
       run: npm run build
-
-    - name: Deploy to server
-      run: |
-        scp -r ./dist user@your-server:/path/to/deploy
-        ssh user@your-server 'cd /path/to/deploy && npm start'
-
-    - name: Notify responsible person
-      uses: slackapi/slack-github-action@v1.18.0
-      with:
-        channel-id: 'your-slack-channel'
-        slack-message: 'Deployment completed successfully!'
       env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        DOC_ENV: production
+        NODE_OPTIONS: --max-old-space-size=4096
+
+    - name: Deploy
+      uses: JamesIves/github-pages-deploy-action@v4.3.4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: gh-pages
+        folder: dist
+        force: true
+        commit-message: website deploy
+        repository-name: EralChen/simple-vuesri
+
+    - name: Cleanup
+      run: rm -rf docs/dist
+
