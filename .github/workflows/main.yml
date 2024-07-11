@@ -19,7 +19,7 @@ jobs:
         pnpm install
 
     - name: Build
-      run: npm run build
+      run: npm run build:prod
       env:
         DOC_ENV: production
         NODE_OPTIONS: --max-old-space-size=4096
